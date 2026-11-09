@@ -1,0 +1,36 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Susun struktur proyek
+        run: |
+          mkdir -p app/src/main/java/id/nana/invoice app/src/main/assets/fonts app/src/main/res/values app/src/main/res/drawable
+          mv index.html app/src/main/assets/
+          mv MainActivity.java app/src/main/java/id/nana/invoice/
+          mv AndroidManifest.xml app/src/main/
+          mv strings.xml styles.xml app/src/main/res/values/
+          mv ic_launcher.xml app/src/main/res/drawable/
+          mv app-build.gradle app/build.gradle
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.7' }
+      - name: Unduh font agar aplikasi offline
+        run: |
+          mkdir -p app/src/main/assets/fonts
+          B=https://raw.githubusercontent.com/google/fonts/main/ofl
+          curl -fL "$B/fraunces/Fraunces%5BSOFT,WONK,opsz,wght%5D.ttf" -o app/src/main/assets/fonts/Fraunces.ttf
+          curl -fL "$B/plusjakartasans/PlusJakartaSans%5Bwght%5D.ttf" -o app/src/main/assets/fonts/PlusJakartaSans.ttf
+          curl -fL "$B/oswald/Oswald%5Bwght%5D.ttf" -o app/src/main/assets/fonts/Oswald.ttf
+          ls -la app/src/main/assets/fonts
+      - run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NanaInvoice-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
